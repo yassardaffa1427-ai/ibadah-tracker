@@ -1,4 +1,6 @@
 import { db } from '@/data/db'
+import { auth } from '@/lib/firebase'
+import { syncRecordToCloud } from '@/data/repositories/cloudSyncRepo'
 
 function base64ToBlob(base64: string, mimeType: string): Blob {
   const bytes = atob(base64)
@@ -28,6 +30,8 @@ export async function importFromJSON(jsonString: string): Promise<void> {
     }
   })
 
+  const dailyRecords = (payload.dailyRecords as Array<{ date: string }>) ?? []
+
   await db.transaction(
     'rw',
     [db.dailyRecords, db.todoItems, db.profiles, db.streakState, db.reminderSettings, db.mediaBlobs],
@@ -47,4 +51,14 @@ export async function importFromJSON(jsonString: string): Promise<void> {
       if (mediaBlobs.length) await db.mediaBlobs.bulkAdd(mediaBlobs as never[])
     },
   )
+
+  // Jika pengguna sedang login dengan Google, dorong seluruh data yang baru di-restore ke Cloud Firestore secara otomatis
+  if (auth?.currentUser) {
+    const userId = auth.currentUser.uid
+    for (const record of dailyRecords) {
+      if (record.date) {
+        await syncRecordToCloud(userId, record.date)
+      }
+    }
+  }
 }
