@@ -4,6 +4,7 @@ import { useStreak } from '@/hooks/useStreak'
 import StreakBadge from '@/components/gamification/StreakBadge'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/data/db'
+import { useAuthStore } from '@/store/authStore'
 
 interface NavItem {
   page: Page
@@ -59,6 +60,7 @@ export default function SidebarNav() {
   const { activePage, setActivePage } = useUIStore()
   const { active, tier } = useStreak()
   const profile = useLiveQuery(() => db.profiles.get('singleton'), [])
+  const user = useAuthStore((s) => s.user)
 
   return (
     <nav
@@ -105,6 +107,8 @@ export default function SidebarNav() {
           <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden" style={{ background: 'var(--c-muted)' }}>
             {profile?.photoBlobId ? (
               <AvatarImage blobId={profile.photoBlobId} />
+            ) : user?.photoURL ? (
+              <img src={user.photoURL} alt={user.displayName || 'Google'} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={{ stroke: "var(--c-muted-fg)" }} strokeWidth={2}>
@@ -115,7 +119,10 @@ export default function SidebarNav() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate" style={{ color: 'var(--c-fg)' }}>
-              {profile?.name ?? 'Pengguna'}
+              {user?.displayName || profile?.name || 'Pengguna'}
+            </p>
+            <p className="text-[10px] truncate" style={{ color: user ? 'var(--c-emerald)' : 'var(--c-muted-fg)' }}>
+              {user ? 'Akun Google' : 'Mode Tamu'}
             </p>
           </div>
         </div>

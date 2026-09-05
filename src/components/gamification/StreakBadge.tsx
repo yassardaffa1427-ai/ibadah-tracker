@@ -24,6 +24,9 @@ const TIER_GLOW = [
   '0 0 20px rgba(212,168,83,0.7)',
 ]
 
+import { motion } from 'framer-motion'
+import CountUp from '@/components/ui/CountUp'
+
 export default function StreakBadge({ streak, tier, size = 'md' }: StreakBadgeProps) {
   const color = TIER_COLORS[tier] ?? TIER_COLORS[0]
   const glow = TIER_GLOW[tier] ?? 'none'
@@ -40,10 +43,12 @@ export default function StreakBadge({ streak, tier, size = 'md' }: StreakBadgePr
       className="inline-flex items-center gap-1.5"
       title={`${streak} hari streak`}
     >
-      <svg
+      <motion.svg
         width={px}
         height={px}
         viewBox="0 0 24 24"
+        animate={hasFlame ? { scale: [1, 1.1, 1], rotate: [0, -3, 3, 0] } : {}}
+        transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
         style={{ filter: glow !== 'none' ? `drop-shadow(${glow})` : undefined }}
         aria-hidden="true"
       >
@@ -60,7 +65,7 @@ export default function StreakBadge({ streak, tier, size = 'md' }: StreakBadgePr
           d="M12 2C12 2 7 8 7 13a5 5 0 0010 0c0-5-5-11-5-11zm0 15a2.5 2.5 0 01-2.5-2.5C9.5 12 12 9 12 9s2.5 3 2.5 5.5A2.5 2.5 0 0112 17z"
           fill={hasFlame ? `url(#${gradId})` : color}
         />
-      </svg>
+      </motion.svg>
       <span
         className="font-semibold tabular-nums"
         style={{
@@ -68,7 +73,7 @@ export default function StreakBadge({ streak, tier, size = 'md' }: StreakBadgePr
           color,
         }}
       >
-        {streak}
+        <CountUp value={streak} />
       </span>
     </span>
   )

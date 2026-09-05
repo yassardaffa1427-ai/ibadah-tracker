@@ -3,6 +3,8 @@ import { TODO_IDS } from '@/types/models'
 import type { DailyRecord, TodoItem, TodoId } from '@/types/models'
 import { toDateKey, isPast } from '@/lib/dateUtils'
 import { calcCompletionRate } from '@/lib/calculations'
+import { auth } from '@/lib/firebase'
+import { syncRecordToCloud } from '@/data/repositories/cloudSyncRepo'
 
 function makeTodoItems(date: string): TodoItem[] {
   return TODO_IDS.map((todoId) => ({
@@ -56,6 +58,10 @@ export async function updateTodoStatus(
   const todos = await db.todoItems.where('dailyRecordDate').equals(date).toArray()
   const rate = calcCompletionRate(todos)
   await db.dailyRecords.update(date, { completionRate: rate })
+
+  if (auth?.currentUser) {
+    syncRecordToCloud(auth.currentUser.uid, date)
+  }
 }
 
 export async function updateJuzTarget(
@@ -64,6 +70,10 @@ export async function updateJuzTarget(
 ): Promise<void> {
   if (isPast(date)) throw new Error('Tidak dapat mengubah checklist hari yang sudah lewat')
   await db.todoItems.update([date, 'murojaah'], { juzTarget: juz })
+
+  if (auth?.currentUser) {
+    syncRecordToCloud(auth.currentUser.uid, date)
+  }
 }
 
 export async function updateHalamanTarget(
@@ -72,6 +82,10 @@ export async function updateHalamanTarget(
 ): Promise<void> {
   if (isPast(date)) throw new Error('Tidak dapat mengubah checklist hari yang sudah lewat')
   await db.todoItems.update([date, 'murojaah'], { halamanTarget: halaman })
+
+  if (auth?.currentUser) {
+    syncRecordToCloud(auth.currentUser.uid, date)
+  }
 }
 
 export async function updatePhotoBlobId(

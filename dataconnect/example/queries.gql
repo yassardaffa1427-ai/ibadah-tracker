@@ -1,0 +1,123 @@
+mutation CreateUser @auth(level: USER) {
+  user_insert(data: {id_expr: "auth.uid", username: "new_user", email: "user@example.com", createdAt_expr: "request.time"})
+}
+
+mutation UpdateUser @auth(level: USER) {
+  user_update(key: {id_expr: "auth.uid"}, data: {username: "updated_name"})
+}
+
+mutation DeleteUser @auth(level: USER) {
+  user_delete(key: {id_expr: "auth.uid"})
+}
+
+query GetUser @auth(level: USER) {
+  user(key: {id_expr: "auth.uid"}) {
+    username
+    email
+  }
+}
+
+query ListUsers @auth(level: USER) {
+  users {
+    username
+  }
+}
+
+mutation CreateDailyLog($date: Date!, $shalatData: String!) @auth(level: USER) {
+  dailyLog_insert(data: {date: $date, shalatData: $shalatData, userId_expr: "auth.uid"})
+}
+
+mutation UpdateDailyLog($id: UUID!, $kajianCount: Int) @auth(level: USER) {
+  dailyLog_update(key: {id: $id}, data: {kajianCount: $kajianCount})
+}
+
+mutation DeleteDailyLog($id: UUID!) @auth(level: USER) {
+  dailyLog_delete(key: {id: $id})
+}
+
+query GetDailyLog($id: UUID!) @auth(level: USER) {
+  dailyLog(key: {id: $id}) {
+    date
+    shalatData
+  }
+}
+
+query ListDailyLogs @auth(level: USER) {
+  dailyLogs(where: {userId: {eq_expr: "auth.uid"}}) {
+    date
+  }
+}
+
+mutation CreateHabit($name: String!, $type: String!) @auth(level: USER) {
+  habit_insert(data: {name: $name, type: $type, userId_expr: "auth.uid"})
+}
+
+mutation UpdateHabit($id: UUID!, $targetValue: Int) @auth(level: USER) {
+  habit_update(key: {id: $id}, data: {targetValue: $targetValue})
+}
+
+mutation DeleteHabit($id: UUID!) @auth(level: USER) {
+  habit_delete(key: {id: $id})
+}
+
+query GetHabit($id: UUID!) @auth(level: USER) {
+  habit(key: {id: $id}) {
+    name
+    type
+  }
+}
+
+query ListHabits @auth(level: USER) {
+  habits(where: {userId: {eq_expr: "auth.uid"}}) {
+    name
+  }
+}
+
+mutation CreateHabitLog($date: Date!, $isCompleted: Boolean!, $habitId: UUID!) @auth(level: USER) {
+  habitLog_insert(data: {date: $date, isCompleted: $isCompleted, habitId: $habitId})
+}
+
+mutation UpdateHabitLog($id: UUID!, $isCompleted: Boolean!) @auth(level: USER) {
+  habitLog_update(key: {id: $id}, data: {isCompleted: $isCompleted})
+}
+
+mutation DeleteHabitLog($id: UUID!) @auth(level: USER) {
+  habitLog_delete(key: {id: $id})
+}
+
+query GetHabitLog($id: UUID!) @auth(level: USER) {
+  habitLog(key: {id: $id}) {
+    date
+    isCompleted
+  }
+}
+
+query ListHabitLogs @auth(level: USER) {
+  habitLogs(where: {habit: {userId: {eq_expr: "auth.uid"}}}) {
+    date
+  }
+}
+
+mutation CreateStreak($count: Int!, $date: Date!) @auth(level: USER) {
+  streak_insert(data: {currentStreakCount: $count, lastUpdatedDate: $date, userId_expr: "auth.uid"})
+}
+
+mutation UpdateStreak($id: UUID!, $count: Int!) @auth(level: USER) {
+  streak_update(key: {id: $id}, data: {currentStreakCount: $count})
+}
+
+mutation DeleteStreak($id: UUID!) @auth(level: USER) {
+  streak_delete(key: {id: $id})
+}
+
+query GetStreak($id: UUID!) @auth(level: USER) {
+  streak(key: {id: $id}) {
+    currentStreakCount
+  }
+}
+
+query ListStreaks @auth(level: USER) {
+  streaks(where: {userId: {eq_expr: "auth.uid"}}) {
+    currentStreakCount
+  }
+}

@@ -1,0 +1,114 @@
+mutation CreateSeedData @transaction {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      username: "user_one",
+      email: "user1@example.com",
+      createdAt: "2023-01-01T00:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440002",
+      username: "user_two",
+      email: "user2@example.com",
+      createdAt: "2023-01-02T00:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440003",
+      username: "user_three",
+      email: "user3@example.com",
+      createdAt: "2023-01-03T00:00:00Z"
+    }
+  ])
+  habit_insertMany(data: [
+    {
+      id: "660e8400-e29b-41d4-a716-446655440001",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      name: "Read Quran",
+      type: "spiritual",
+      targetValue: 1,
+      category: "Religion"
+    },
+    {
+      id: "660e8400-e29b-41d4-a716-446655440002",
+      userId: "550e8400-e29b-41d4-a716-446655440002",
+      name: "Exercise",
+      type: "physical",
+      targetValue: 30,
+      category: "Health"
+    },
+    {
+      id: "660e8400-e29b-41d4-a716-446655440003",
+      userId: "550e8400-e29b-41d4-a716-446655440003",
+      name: "Coding",
+      type: "skill",
+      targetValue: 2,
+      category: "Professional"
+    }
+  ])
+  dailyLog_insertMany(data: [
+    {
+      id: "770e8400-e29b-41d4-a716-446655440001",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      date: "2023-10-01",
+      shalatData: "5/5",
+      quranProgress: "5 pages",
+      kajianCount: 1
+    },
+    {
+      id: "770e8400-e29b-41d4-a716-446655440002",
+      userId: "550e8400-e29b-41d4-a716-446655440002",
+      date: "2023-10-01",
+      shalatData: "4/5",
+      quranProgress: "0 pages",
+      kajianCount: 0
+    },
+    {
+      id: "770e8400-e29b-41d4-a716-446655440003",
+      userId: "550e8400-e29b-41d4-a716-446655440003",
+      date: "2023-10-01",
+      shalatData: "5/5",
+      quranProgress: "10 pages",
+      kajianCount: 2
+    }
+  ])
+  habitLog_insertMany(data: [
+    {
+      id: "880e8400-e29b-41d4-a716-446655440001",
+      habitId: "660e8400-e29b-41d4-a716-446655440001",
+      date: "2023-10-01",
+      isCompleted: true
+    },
+    {
+      id: "880e8400-e29b-41d4-a716-446655440002",
+      habitId: "660e8400-e29b-41d4-a716-446655440002",
+      date: "2023-10-01",
+      isCompleted: false
+    },
+    {
+      id: "880e8400-e29b-41d4-a716-446655440003",
+      habitId: "660e8400-e29b-41d4-a716-446655440003",
+      date: "2023-10-01",
+      isCompleted: true
+    }
+  ])
+  streak_insertMany(data: [
+    {
+      id: "990e8400-e29b-41d4-a716-446655440001",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      currentStreakCount: 5,
+      lastUpdatedDate: "2023-10-01"
+    },
+    {
+      id: "990e8400-e29b-41d4-a716-446655440002",
+      userId: "550e8400-e29b-41d4-a716-446655440002",
+      currentStreakCount: 0,
+      lastUpdatedDate: "2023-10-01"
+    },
+    {
+      id: "990e8400-e29b-41d4-a716-446655440003",
+      userId: "550e8400-e29b-41d4-a716-446655440003",
+      currentStreakCount: 12,
+      lastUpdatedDate: "2023-10-01"
+    }
+  ])
+}

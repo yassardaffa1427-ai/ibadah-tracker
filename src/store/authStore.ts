@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth'
 import { auth, googleProvider, isFirebaseConfigured } from '@/lib/firebase'
 import { getProfile, saveProfile } from '@/data/repositories/profileRepo'
+import { syncRecordToCloud, startCloudRealtimeListener } from '@/data/repositories/cloudSyncRepo'
 import { toast } from 'sonner'
 
 interface AuthState {
@@ -48,6 +49,13 @@ export const useAuthStore = create<AuthState>((set) => ({
                 gender: currentProfile?.gender,
                 photoBlobId: currentProfile?.photoBlobId,
               })
+            }
+
+            // Jalankan sinkronisasi awal & aktifkan listener real-time Cloud Firestore
+            syncRecordToCloud(firebaseUser.uid)
+            const unsubCloud = startCloudRealtimeListener(firebaseUser.uid)
+            return () => {
+              unsubCloud()
             }
           } catch (e) {
             console.error('Gagal menyinkronkan profil Google ke penyimpanan lokal:', e)

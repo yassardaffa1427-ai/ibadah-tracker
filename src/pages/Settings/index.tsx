@@ -158,6 +158,126 @@ function ProfileSection() {
   )
 }
 
+function GoogleAuthSection() {
+  const { user, logout, isConfigured } = useAuthStore()
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xs uppercase tracking-widest" style={{ color: 'var(--c-muted-fg)' }}>
+          Akun &amp; Autentikasi
+        </h2>
+        <span
+          className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+          style={
+            user
+              ? { background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80' }
+              : { background: 'var(--c-muted)', color: 'var(--c-muted-fg)' }
+          }
+        >
+          {user ? 'Terhubung' : 'Lokal / Tamu'}
+        </span>
+      </div>
+
+      <div
+        className="rounded-2xl card-soft p-5 space-y-4"
+        style={{ background: 'var(--c-surface)', border: '1px solid var(--c-border)' }}
+      >
+        {user ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3.5">
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName || 'Google Profile'}
+                  className="w-12 h-12 rounded-full object-cover border-2"
+                  style={{ borderColor: 'var(--c-gold)' }}
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center border-2"
+                  style={{
+                    borderColor: 'var(--c-gold)',
+                    background: 'rgba(218, 165, 32, 0.1)',
+                  }}
+                >
+                  <GoogleIcon size={20} />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold truncate" style={{ color: 'var(--c-fg)' }}>
+                  {user.displayName || 'Pengguna Google'}
+                </p>
+                <p className="text-xs truncate" style={{ color: 'var(--c-muted-fg)' }}>
+                  {user.email}
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="p-3 rounded-xl text-xs space-y-1"
+              style={{
+                background: 'rgba(49, 185, 139, 0.08)',
+                border: '1px solid rgba(49, 185, 139, 0.2)',
+                color: 'var(--c-fg)',
+              }}
+            >
+              <p className="font-medium flex items-center gap-1.5" style={{ color: 'var(--c-emerald)' }}>
+                <span>✓</span> Akun Google Terverifikasi
+              </p>
+              <p style={{ color: 'var(--c-muted-fg)' }}>
+                Profil dan identitas ibadah Anda terhubung dengan akun Google ini.
+              </p>
+            </div>
+
+            <button
+              onClick={() => logout()}
+              className="w-full py-2.5 rounded-lg text-sm font-medium transition-colors"
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+              }}
+            >
+              Keluar dari Akun Google
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-3.5">
+            <div className="space-y-1">
+              <h3 className="text-sm font-medium" style={{ color: 'var(--c-fg)' }}>
+                Masuk dengan Akun Google
+              </h3>
+              <p className="text-xs" style={{ color: 'var(--c-muted-fg)' }}>
+                Masuk menggunakan akun Google Anda untuk mengamankan data profil dan mempermudah akses di berbagai perangkat.
+              </p>
+            </div>
+
+            <GoogleAuthButton />
+
+            {!isConfigured && (
+              <div
+                className="p-3 rounded-xl text-[11px] space-y-1"
+                style={{
+                  background: 'rgba(245, 158, 11, 0.08)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
+                  color: '#fbbf24',
+                }}
+              >
+                <p className="font-semibold">Info Konfigurasi Firebase:</p>
+                <p className="opacity-90">
+                  Untuk mengaktifkan login Google, isi kredensial Firebase di file <code>.env.local</code> (lihat contoh di <code>.env.example</code>).
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
 function StreakSection() {
   const { active, longest, tier } = useStreak()
   return (
@@ -435,6 +555,7 @@ export default function SettingsPage() {
         <h1 className="font-display text-2xl" style={{ color: 'var(--c-fg)', fontFamily: '"DM Sans", sans-serif', fontWeight: 800, fontVariationSettings: '"opsz" 14' }}>Settings</h1>
       </div>
       <ProfileSection />
+      <GoogleAuthSection />
       <StreakSection />
       <ReminderSection />
       <BackupSection />

@@ -10,6 +10,8 @@ import type { TodoId } from '@/types/models'
 import { useUIStore } from '@/store/uiStore'
 import RecentHistory from '@/components/history/RecentHistory'
 import CekUpModal from '@/components/history/CekUpModal'
+import SpotlightCard from '@/components/ui/SpotlightCard'
+import CountUp from '@/components/ui/CountUp'
 
 function ReminderPanel() {
   const [permission, setPermission] = useState<NotificationPermission>(
@@ -156,22 +158,24 @@ export default function DashboardPage() {
     <>
     <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
       {/* Header with streak */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-widest mb-1" style={{ color: 'var(--c-muted-fg)' }}>
-            Dashboard
-          </p>
-          <h1 className="font-display text-2xl" style={{ color: 'var(--c-fg)', fontFamily: '"DM Sans", sans-serif', fontWeight: 800 }}>
-            Ibadah Hari Ini
-          </h1>
+      <SpotlightCard spotlightColor="rgba(229, 193, 88, 0.15)">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-widest mb-1" style={{ color: 'var(--c-muted-fg)' }}>
+              Dashboard
+            </p>
+            <h1 className="font-display text-2xl" style={{ color: 'var(--c-fg)', fontFamily: '"DM Sans", sans-serif', fontWeight: 800 }}>
+              Ibadah Hari Ini
+            </h1>
+          </div>
+          <div className="text-right">
+            <StreakBadge streak={active} tier={tier} size="lg" />
+            <p className="text-xs mt-0.5 font-medium" style={{ color: 'var(--c-muted-fg)' }}>
+              Terpanjang: <CountUp value={longest} /> hari
+            </p>
+          </div>
         </div>
-        <div className="text-right">
-          <StreakBadge streak={active} tier={tier} size="lg" />
-          <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted-fg)' }}>
-            Terpanjang: {longest} hari
-          </p>
-        </div>
-      </div>
+      </SpotlightCard>
 
       {/* Notification reminder */}
       <ReminderPanel />

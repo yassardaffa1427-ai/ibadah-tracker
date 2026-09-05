@@ -1,0 +1,36 @@
+type User @table {
+  username: String!
+  email: String!
+  createdAt: Timestamp!
+  avatarUrl: String
+  dailyReminderTime: String
+}
+
+type DailyLog @table {
+  date: Date!
+  user: User!
+  # shalatData disimpan sebagai JSON/String untuk fleksibilitas 5 waktu
+  shalatData: String! 
+  quranProgress: String
+  kajianCount: Int
+}
+
+type Habit @table {
+  name: String!
+  type: String!
+  targetValue: Int
+  category: String
+  user: User!
+}
+
+type HabitLog @table {
+  date: Date!
+  isCompleted: Boolean!
+  habit: Habit!
+}
+
+type Streak @table {
+  user: User!
+  currentStreakCount: Int!
+  lastUpdatedDate: Date!
+}

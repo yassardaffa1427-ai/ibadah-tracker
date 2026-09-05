@@ -7,6 +7,11 @@ import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { toast } from 'sonner'
 
+import type { TodoId } from '@/types/models'
+import SpotlightCard from '@/components/ui/SpotlightCard'
+import CountUp from '@/components/ui/CountUp'
+import { triggerCelebrationConfetti } from '@/components/ui/Confetti'
+
 export default function ChecklistPage() {
   const today = toDateKey()
   const { todos, record, isLoading, toggleTodo, setJuz, setHalaman } = useDailyRecord()
@@ -15,14 +20,27 @@ export default function ChecklistPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
 
   const totalCount = todos.length || 11
+  const doneCount = todos.filter((t) => t.isDone).length
+  const completionRate = record?.completionRate ?? 0
 
   const sortedTodos = [...todos].sort((a, b) => {
     const order = ['tahajud','subuh','dhuha','zuhur','ashar','maghrib','isya','kajian','murojaah','zikir-pagi','zikir-petang']
     return order.indexOf(a.todoId) - order.indexOf(b.todoId)
   })
 
-  const doneCount = todos.filter((t) => t.isDone).length
-  const completionRate = record?.completionRate ?? 0
+  const handleToggleWithCelebration = async (todoId: TodoId, current: boolean) => {
+    const isCurrentlyDone = Boolean(current)
+    const newDoneCount = isCurrentlyDone ? doneCount - 1 : doneCount + 1
+
+    await toggleTodo(todoId, isCurrentlyDone)
+
+    if (newDoneCount === totalCount && !isCurrentlyDone) {
+      triggerCelebrationConfetti()
+      toast.success('Alhamdulillah! Semua ibadah harian selesai dikerjakan! 🌟', {
+        duration: 5000,
+      })
+    }
+  }
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6 space-y-6">
@@ -36,17 +54,17 @@ export default function ChecklistPage() {
         </h1>
       </div>
 
-      {/* Progress bar */}
-      <div>
+      {/* Progress bar card */}
+      <SpotlightCard spotlightColor="rgba(49, 185, 139, 0.15)">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm font-medium" style={{ color: 'var(--c-muted-fg)' }}>
-            {doneCount} dari {totalCount} selesai
+            <CountUp value={doneCount} /> dari {totalCount} selesai
           </span>
           <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--c-accent)' }}>
-            {completionRate}%
+            <CountUp value={completionRate} />%
           </span>
         </div>
-        <div className="h-2 rounded-full overflow-hidden" style={{ background: 'var(--c-muted)' }}>
+        <div className="h-2.5 rounded-full overflow-hidden" style={{ background: 'var(--c-muted)' }}>
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -58,11 +76,11 @@ export default function ChecklistPage() {
           />
         </div>
         {completionRate >= 70 && (
-          <p className="text-xs mt-1.5" style={{ color: 'var(--c-accent)' }}>
-            Streak hari ini terhitung ✓
+          <p className="text-xs mt-2 flex items-center gap-1 font-medium" style={{ color: 'var(--c-accent)' }}>
+            <span>✓</span> Streak hari ini terhitung &amp; tersimpan
           </p>
         )}
-      </div>
+      </SpotlightCard>
 
       {/* Todo list */}
       {isLoading ? (
@@ -78,7 +96,7 @@ export default function ChecklistPage() {
               key={item.todoId}
               item={item}
               isReadOnly={isReadOnly}
-              onToggle={toggleTodo}
+              onToggle={handleToggleWithCelebration}
               onJuzChange={setJuz}
               onHalamanChange={setHalaman}
             />
