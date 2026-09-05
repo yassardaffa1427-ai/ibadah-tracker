@@ -505,7 +505,7 @@ export default function CekUpModal({ date, onClose }: { date: string; onClose: (
               >
                 <p className="font-medium text-amber-300">"Istiqomah di Setiap Langkah"</p>
                 <p className="text-[11px] text-emerald-300/80 font-mono pt-1">
-                  Logo ibadah track by <span className="font-bold text-amber-300">@yasraffad_sensei</span>
+                  Ibadah tracker app by <span className="font-bold text-amber-300">@yasraffad_sensei</span>
                 </p>
               </div>
             </div>
