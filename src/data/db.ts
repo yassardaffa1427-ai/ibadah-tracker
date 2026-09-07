@@ -90,3 +90,14 @@ class IbadahDB extends Dexie {
 }
 
 export const db = new IbadahDB()
+
+// If another tab/window (or a stale service-worker-controlled instance) is holding
+// an open connection when a schema upgrade ships, IndexedDB blocks the new tab's
+// upgrade indefinitely instead of erroring. Auto-close this tab's connection when
+// a newer version wants to open elsewhere, then reload so it picks up the new
+// schema/code once that other tab finishes — this is the standard Dexie pattern
+// for avoiding a silent "stuck" state across multi-tab/PWA sessions.
+db.on('versionchange', () => {
+  db.close()
+  if (typeof window !== 'undefined') window.location.reload()
+})

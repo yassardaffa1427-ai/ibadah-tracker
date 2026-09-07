@@ -45,6 +45,7 @@ function AppShell() {
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null)
+  const [loadStuck, setLoadStuck] = useState(false)
   const initAuth = useAuthStore((s) => s.initAuth)
 
   useEffect(() => {
@@ -53,14 +54,31 @@ export default function App() {
   }, [initAuth])
 
   useEffect(() => {
+    // If another tab/PWA window is holding an old database connection open, the
+    // schema upgrade (and every db call behind it, including this one) can hang
+    // indefinitely instead of erroring. Surface a hint instead of a blank screen.
+    const stuckTimer = setTimeout(() => setLoadStuck(true), 6000)
+
     getProfile().then((p) => {
+      clearTimeout(stuckTimer)
       setShowOnboarding(!p)
     }).catch(() => {
+      clearTimeout(stuckTimer)
       setShowOnboarding(true)
     })
+
+    return () => clearTimeout(stuckTimer)
   }, [])
 
-  if (showOnboarding === null) return null
+  if (showOnboarding === null) {
+    return loadStuck ? (
+      <div className="grid min-h-screen place-items-center px-6 text-center" style={{ background: 'var(--c-bg)' }}>
+        <p className="text-sm max-w-xs" style={{ color: 'var(--c-muted-fg)' }}>
+          Memuat lama. Coba tutup semua tab/jendela lain yang membuka Ibadah Tracker (termasuk aplikasi PWA-nya jika terpasang), lalu muat ulang halaman ini.
+        </p>
+      </div>
+    ) : null
+  }
 
   return (
     <>
