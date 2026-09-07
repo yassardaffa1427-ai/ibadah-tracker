@@ -38,8 +38,14 @@ class IbadahDB extends Dexie {
         const sunnahTable = tx.table<SunnahItem, [string, string]>('sunnahItems')
         const dailyRecordsTable = tx.table<DailyRecord, string>('dailyRecords')
 
-        // Move Dhuha from wajib (todoItems) into sunnah (sunnahItems)
-        const dhuhaRows = await todoTable.where('todoId').equals('dhuha').toArray()
+        // Move Dhuha from wajib (todoItems) into sunnah (sunnahItems).
+        // todoId isn't its own index (only the compound [dailyRecordDate+todoId]
+        // primary key and the standalone dailyRecordDate/isDone indexes exist),
+        // so where('todoId') throws SchemaError — scan and filter in JS instead.
+        const allTodos = await todoTable.toArray()
+        // Legacy data can still contain 'dhuha' even though it's no longer a
+        // valid TodoId in the current type — cast for this one-time migration read.
+        const dhuhaRows = allTodos.filter((row) => (row.todoId as string) === 'dhuha')
         for (const row of dhuhaRows) {
           await sunnahTable.put({
             sunnahId: 'dhuha',
@@ -48,7 +54,7 @@ class IbadahDB extends Dexie {
             completedAt: row.completedAt,
           })
         }
-        await todoTable.where('todoId').equals('dhuha').delete()
+        await todoTable.bulkDelete(dhuhaRows.map((row) => [row.dailyRecordDate, row.todoId]))
 
         // Migrate Puasa Sunnah from localStorage (sunnah-YYYY-MM-DD keys)
         const puasaKeys: string[] = []
