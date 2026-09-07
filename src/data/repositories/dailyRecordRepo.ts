@@ -1,6 +1,6 @@
 import { db } from '@/data/db'
-import { TODO_IDS } from '@/types/models'
-import type { DailyRecord, TodoItem, TodoId } from '@/types/models'
+import { TODO_IDS, SUNNAH_IDS } from '@/types/models'
+import type { DailyRecord, TodoItem, TodoId, SunnahItem, SunnahId } from '@/types/models'
 import { toDateKey, isPast } from '@/lib/dateUtils'
 import { calcCompletionRate } from '@/lib/calculations'
 import { auth } from '@/lib/firebase'
@@ -14,34 +14,68 @@ function makeTodoItems(date: string): TodoItem[] {
   }))
 }
 
+function makeSunnahItems(date: string): SunnahItem[] {
+  return SUNNAH_IDS.map((sunnahId) => ({
+    sunnahId,
+    dailyRecordDate: date,
+    isDone: false,
+  }))
+}
+
 export async function getOrCreateTodayRecord(): Promise<{
   record: DailyRecord
   todos: TodoItem[]
+  sunnah: SunnahItem[]
 }> {
   const date = toDateKey()
   const existing = await db.dailyRecords.get(date)
+
   if (existing) {
-    const todos = await db.todoItems.where('dailyRecordDate').equals(date).toArray()
-    return { record: existing, todos }
+    const [todos, sunnah] = await Promise.all([
+      db.todoItems.where('dailyRecordDate').equals(date).toArray(),
+      db.sunnahItems.where('dailyRecordDate').equals(date).toArray(),
+    ])
+
+    // Cover days whose record predates the sunnah table (or a partial seed).
+    // Use bulkPut (not bulkAdd): useDailyRecord/useSunnahRecord both call this
+    // on mount, so a concurrent call may already have inserted the same rows.
+    const missingSunnah = SUNNAH_IDS.filter((id) => !sunnah.some((s) => s.sunnahId === id)).map(
+      (sunnahId) => ({ sunnahId, dailyRecordDate: date, isDone: false }),
+    )
+    if (missingSunnah.length > 0) {
+      await db.sunnahItems.bulkPut(missingSunnah)
+      sunnah.push(...missingSunnah)
+    }
+
+    return { record: existing, todos, sunnah }
   }
 
   const record: DailyRecord = {
     date,
     completionRate: 0,
+    sunnahCompletionRate: 0,
     createdAt: Date.now(),
   }
   const todos = makeTodoItems(date)
+  const sunnah = makeSunnahItems(date)
 
-  await db.transaction('rw', [db.dailyRecords, db.todoItems], async () => {
-    await db.dailyRecords.add(record)
-    await db.todoItems.bulkAdd(todos)
+  // put/bulkPut (not add/bulkAdd): concurrent hook mounts can race here, and
+  // put is idempotent (same computed rows) where add throws on a duplicate key.
+  await db.transaction('rw', [db.dailyRecords, db.todoItems, db.sunnahItems], async () => {
+    await db.dailyRecords.put(record)
+    await db.todoItems.bulkPut(todos)
+    await db.sunnahItems.bulkPut(sunnah)
   })
 
-  return { record, todos }
+  return { record, todos, sunnah }
 }
 
 export async function getTodosForDate(date: string): Promise<TodoItem[]> {
   return db.todoItems.where('dailyRecordDate').equals(date).toArray()
+}
+
+export async function getSunnahForDate(date: string): Promise<SunnahItem[]> {
+  return db.sunnahItems.where('dailyRecordDate').equals(date).toArray()
 }
 
 export async function updateTodoStatus(
@@ -58,6 +92,38 @@ export async function updateTodoStatus(
   const todos = await db.todoItems.where('dailyRecordDate').equals(date).toArray()
   const rate = calcCompletionRate(todos)
   await db.dailyRecords.update(date, { completionRate: rate })
+
+  if (auth?.currentUser) {
+    syncRecordToCloud(auth.currentUser.uid, date)
+  }
+}
+
+export async function updateSunnahStatus(
+  date: string,
+  sunnahId: SunnahId,
+  isDone: boolean,
+): Promise<void> {
+  if (isPast(date)) throw new Error('Tidak dapat mengubah checklist hari yang sudah lewat')
+
+  const completedAt = isDone ? Date.now() : undefined
+  await db.sunnahItems.update([date, sunnahId], { isDone, completedAt })
+
+  const sunnah = await db.sunnahItems.where('dailyRecordDate').equals(date).toArray()
+  const done = sunnah.filter((s) => s.isDone).length
+  const sunnahCompletionRate = Math.round((done / SUNNAH_IDS.length) * 100)
+  await db.dailyRecords.update(date, { sunnahCompletionRate })
+
+  if (auth?.currentUser) {
+    syncRecordToCloud(auth.currentUser.uid, date)
+  }
+}
+
+export async function updatePuasaType(
+  date: string,
+  puasaType: string | undefined,
+): Promise<void> {
+  if (isPast(date)) throw new Error('Tidak dapat mengubah checklist hari yang sudah lewat')
+  await db.sunnahItems.update([date, 'puasa-sunnah'], { puasaType })
 
   if (auth?.currentUser) {
     syncRecordToCloud(auth.currentUser.uid, date)

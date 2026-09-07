@@ -3,16 +3,43 @@ import { format, parseISO } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { motion, AnimatePresence } from 'framer-motion'
 import { db } from '@/data/db'
-import { TODO_LABELS } from '@/types/models'
+import { TODO_IDS, TODO_LABELS, SUNNAH_IDS, SUNNAH_LABELS, PUASA_TYPE_OPTIONS } from '@/types/models'
 import type { TodoId } from '@/types/models'
 import LogoIcon from '@/components/LogoIcon'
 import imgBanner from '@/imports/CekUp/1bbb101f773530ebcd1dbd3a585aa20886c29ed5.png'
+import { getSunnahForDate } from '@/data/repositories/dailyRecordRepo'
 
 interface DayData {
   done: number
   total: number
   rate: number
   undoneIds: TodoId[]
+}
+
+interface SunnahData {
+  done: number
+  total: number
+  rate: number
+  doneLabels: string[]
+}
+
+function ProgressIcon({ gradientId, topColor, bottomColor }: { gradientId: string; topColor: string; bottomColor: string }) {
+  return (
+    <div className="h-[12.8px] w-[8px] shrink-0 relative">
+      <svg className="absolute inset-0 size-full" fill="none" height="12.8" width="8" viewBox="0 0 8 12.8">
+        <path
+          d="M4 0C4 0 0 4.8 0 8.8C0 9.86087 0.421427 10.8783 1.17157 11.6284C1.92172 12.3786 2.93913 12.8 4 12.8C5.06087 12.8 6.07828 12.3786 6.82843 11.6284C7.57857 10.8783 8 9.86087 8 8.8C8 4.8 4 0 4 0ZM4 12C3.46957 12 2.96086 11.7893 2.58579 11.4142C2.21071 11.0391 2 10.5304 2 10C2 8 4 5.6 4 5.6C4 5.6 6 8 6 10C6 10.5304 5.78929 11.0391 5.41421 11.4142C5.03914 11.7893 4.53043 12 4 12Z"
+          fill={`url(#${gradientId})`}
+        />
+        <defs>
+          <linearGradient gradientUnits="userSpaceOnUse" id={gradientId} x1="4" x2="4" y1="0.8" y2="12">
+            <stop stopColor={topColor} />
+            <stop offset="1" stopColor={bottomColor} />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  )
 }
 
 function getMotivation(rate: number): { emoji: string; title: string; sub: string } {
@@ -28,6 +55,7 @@ function clamp(v: number, min: number, max: number) {
 
 export default function CekUpModal({ date, onClose }: { date: string; onClose: () => void }) {
   const [data, setData] = useState<DayData | null>(null)
+  const [sunnah, setSunnah] = useState<SunnahData | null>(null)
   const [imgError, setImgError] = useState(false)
 
   const cardRef = useRef<HTMLDivElement>(null)
@@ -47,15 +75,25 @@ export default function CekUpModal({ date, onClose }: { date: string; onClose: (
 
   useEffect(() => {
     async function load() {
-      const [record, todos] = await Promise.all([
+      const [record, todos, sunnahItems] = await Promise.all([
         db.dailyRecords.get(date),
         db.todoItems.where('dailyRecordDate').equals(date).toArray(),
+        getSunnahForDate(date),
       ])
       const done = todos.filter((t) => t.isDone).length
-      const total = todos.length || 11
+      const total = TODO_IDS.length
       const rate = record?.completionRate ?? Math.round((done / total) * 100)
       const undoneIds = todos.filter((t) => !t.isDone).map((t) => t.todoId as TodoId)
       setData({ done, total, rate, undoneIds })
+
+      const sunnahDone = sunnahItems.filter((s) => s.isDone)
+      const sunnahRate = record?.sunnahCompletionRate ?? Math.round((sunnahDone.length / SUNNAH_IDS.length) * 100)
+      const doneLabels = sunnahDone.map((s) =>
+        s.sunnahId === 'puasa-sunnah'
+          ? `Puasa ${PUASA_TYPE_OPTIONS.find((o) => o.value === s.puasaType)?.label ?? 'Sunnah'}`
+          : SUNNAH_LABELS[s.sunnahId],
+      )
+      setSunnah({ done: sunnahDone.length, total: SUNNAH_IDS.length, rate: sunnahRate, doneLabels })
     }
     load()
   }, [date])
@@ -378,8 +416,9 @@ export default function CekUpModal({ date, onClose }: { date: string; onClose: (
             {/* Progress Row */}
             <div className="px-4 pb-2">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="font-medium text-[13px]" style={{ fontFamily: 'Outfit, sans-serif', color: '#61967a' }}>
+                <span className="flex items-center gap-1 font-medium text-[13px]" style={{ fontFamily: 'Outfit, sans-serif', color: '#61967a' }}>
                   {data ? `${data.done} dari ${data.total} selesai` : '…'}
+                  <ProgressIcon gradientId="taskIconGradient" topColor="#34BA8B" bottomColor="#BDEB77" />
                 </span>
                 <span
                   className="font-extrabold text-[19px] leading-none"
@@ -422,6 +461,59 @@ export default function CekUpModal({ date, onClose }: { date: string; onClose: (
                       }}
                     >
                       {TODO_LABELS[id]}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sunnah Progress */}
+            <div className="px-4 pb-2 pt-1">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="flex items-center gap-1 font-medium text-[13px]" style={{ fontFamily: 'Outfit, sans-serif', color: '#3888ff' }}>
+                  {sunnah ? `Sunnah: ${sunnah.done} dari ${sunnah.total} selesai` : '…'}
+                  <ProgressIcon gradientId="sunnahIconGradient" topColor="#1B73F6" bottomColor="#86E4FF" />
+                </span>
+                <span
+                  className="font-extrabold text-[19px] leading-none"
+                  style={{ fontFamily: '"DM Sans", sans-serif', fontVariationSettings: '"opsz" 14', color: '#3888ff' }}
+                >
+                  {sunnah ? `${sunnah.rate}%` : '…'}
+                </span>
+              </div>
+              <div
+                className="rounded-full overflow-hidden"
+                style={{ background: 'rgba(56,136,255,0.12)', height: 7 }}
+              >
+                <div
+                  className="h-full rounded-full transition-all duration-700"
+                  style={{
+                    width: `${sunnah?.rate ?? 0}%`,
+                    background: 'linear-gradient(90deg, #88e5ff, #1971f6)',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Sunnah Done */}
+            {sunnah && sunnah.doneLabels.length > 0 && (
+              <div className="px-4 pb-3 pt-1">
+                <p className="font-medium text-[11px] mb-1.5" style={{ fontFamily: 'Outfit, sans-serif', color: '#65726d' }}>
+                  Sunnah yg dikerjakan
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {sunnah.doneLabels.map((label) => (
+                    <span
+                      key={label}
+                      className="text-[11px] font-medium px-[8px] py-[2px] rounded-full shrink-0"
+                      style={{
+                        fontFamily: 'Outfit, sans-serif',
+                        background: 'rgba(56,136,255,0.1)',
+                        color: '#3888ff',
+                        border: '1px solid rgba(56,136,255,0.2)',
+                      }}
+                    >
+                      {label}
                     </span>
                   ))}
                 </div>

@@ -3,7 +3,7 @@ import { useUIStore } from '@/store/uiStore'
 import { getTodosForDate, getDailyRecord } from '@/data/repositories/dailyRecordRepo'
 import { getBlob } from '@/data/repositories/mediaRepo'
 import { formatDisplayDate } from '@/lib/dateUtils'
-import { TODO_LABELS } from '@/types/models'
+import { TODO_IDS, TODO_LABELS } from '@/types/models'
 import type { TodoItem, DailyRecord } from '@/types/models'
 
 export default function DayDetailDrawer() {
@@ -41,8 +41,7 @@ export default function DayDetailDrawer() {
 
   if (!drawerDate) return null
 
-  const order = ['tahajud','subuh','dhuha','zuhur','ashar','maghrib','isya','kajian','murojaah']
-  const sorted = [...todos].sort((a, b) => order.indexOf(a.todoId) - order.indexOf(b.todoId))
+  const sorted = [...todos].sort((a, b) => TODO_IDS.indexOf(a.todoId) - TODO_IDS.indexOf(b.todoId))
 
   return (
     <div

@@ -5,7 +5,7 @@ import ContributionHeatmap from '@/components/heatmap/ContributionHeatmap'
 import StreakBadge from '@/components/gamification/StreakBadge'
 import { useStreak } from '@/hooks/useStreak'
 import { toDateKey } from '@/lib/dateUtils'
-import { TODO_LABELS } from '@/types/models'
+import { TODO_IDS, TODO_LABELS, SUNNAH_IDS, SUNNAH_LABELS, PUASA_TYPE_OPTIONS } from '@/types/models'
 import type { TodoId } from '@/types/models'
 import { useUIStore } from '@/store/uiStore'
 import RecentHistory from '@/components/history/RecentHistory'
@@ -63,11 +63,12 @@ function RekapHarian() {
 
   const data = useLiveQuery(
     async () => {
-      const [record, todos] = await Promise.all([
+      const [record, todos, sunnahItems] = await Promise.all([
         db.dailyRecords.get(today),
         db.todoItems.where('dailyRecordDate').equals(today).toArray(),
+        db.sunnahItems.where('dailyRecordDate').equals(today).toArray(),
       ])
-      return { record, todos }
+      return { record, todos, sunnahItems }
     },
     [today],
     null,
@@ -85,11 +86,19 @@ function RekapHarian() {
     )
   }
 
-  const { record, todos } = data
+  const { record, todos, sunnahItems } = data
   const doneCount = todos.filter((t) => t.isDone).length
   const undone = todos.filter((t) => !t.isDone).map((t) => t.todoId as TodoId)
   const rate = record?.completionRate ?? 0
-  const totalCount = todos.length || 11
+  const totalCount = TODO_IDS.length
+
+  const sunnahDone = sunnahItems.filter((s) => s.isDone)
+  const sunnahRate = record?.sunnahCompletionRate ?? 0
+  const sunnahDoneLabels = sunnahDone.map((s) =>
+    s.sunnahId === 'puasa-sunnah'
+      ? `Puasa ${PUASA_TYPE_OPTIONS.find((o) => o.value === s.puasaType)?.label ?? 'Sunnah'}`
+      : SUNNAH_LABELS[s.sunnahId],
+  )
 
   if (!record && doneCount === 0) {
     return (
@@ -142,6 +151,40 @@ function RekapHarian() {
           Mashaa Allah! Semua ibadah selesai hari ini 🌟
         </p>
       )}
+
+      {/* Sunnah */}
+      <div className="pt-2 mt-1" style={{ borderTop: '1px solid var(--c-border)' }}>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium" style={{ color: '#3888ff' }}>
+            Sunnah: {sunnahDone.length} dari {SUNNAH_IDS.length} selesai
+          </span>
+          <span className="text-xl font-semibold tabular-nums font-display" style={{ color: '#3888ff' }}>
+            {sunnahRate}%
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full overflow-hidden mt-1.5" style={{ background: 'rgba(56,136,255,0.12)' }}>
+          <div
+            className="h-full rounded-full transition-all duration-500"
+            style={{ width: `${sunnahRate}%`, background: 'linear-gradient(90deg,#88e5ff,#1971f6)' }}
+          />
+        </div>
+        {sunnahDoneLabels.length > 0 && (
+          <div className="mt-2">
+            <p className="text-xs mb-1.5" style={{ color: 'var(--c-muted-fg)' }}>Sunnah yg dikerjakan:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {sunnahDoneLabels.map((label) => (
+                <span
+                  key={label}
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{ background: 'rgba(56,136,255,0.1)', color: '#3888ff', border: '1px solid rgba(56,136,255,0.2)' }}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

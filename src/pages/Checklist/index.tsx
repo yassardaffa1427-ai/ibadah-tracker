@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useDailyRecord } from '@/hooks/useDailyRecord'
+import { useSunnahRecord } from '@/hooks/useSunnahRecord'
 import TodoItemCard from '@/components/checklist/TodoItemCard'
-import SunnahTodos from '@/components/checklist/SunnahTodos'
+import SunnahItemCard from '@/components/checklist/SunnahItemCard'
 import { toDateKey, isPast } from '@/lib/dateUtils'
 import { format } from 'date-fns'
 import { id as localeId } from 'date-fns/locale'
 import { toast } from 'sonner'
 
+import { TODO_IDS, SUNNAH_IDS } from '@/types/models'
 import type { TodoId } from '@/types/models'
 import SpotlightCard from '@/components/ui/SpotlightCard'
 import CountUp from '@/components/ui/CountUp'
@@ -15,18 +17,23 @@ import { triggerCelebrationConfetti } from '@/components/ui/Confetti'
 export default function ChecklistPage() {
   const today = toDateKey()
   const { todos, record, isLoading, toggleTodo, setJuz, setHalaman } = useDailyRecord()
+  const { sunnah, toggleSunnah, setPuasaType } = useSunnahRecord()
   const isReadOnly = isPast(today)
   const [confirmed, setConfirmed] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
 
-  const totalCount = todos.length || 11
+  const totalCount = TODO_IDS.length
   const doneCount = todos.filter((t) => t.isDone).length
   const completionRate = record?.completionRate ?? 0
 
-  const sortedTodos = [...todos].sort((a, b) => {
-    const order = ['tahajud','subuh','dhuha','zuhur','ashar','maghrib','isya','kajian','murojaah','zikir-pagi','zikir-petang']
-    return order.indexOf(a.todoId) - order.indexOf(b.todoId)
-  })
+  const sortedTodos = [...todos].sort(
+    (a, b) => TODO_IDS.indexOf(a.todoId) - TODO_IDS.indexOf(b.todoId),
+  )
+
+  const sortedSunnah = [...sunnah].sort(
+    (a, b) => SUNNAH_IDS.indexOf(a.sunnahId) - SUNNAH_IDS.indexOf(b.sunnahId),
+  )
+  const sunnahDoneCount = sunnah.filter((s) => s.isDone).length
 
   const handleToggleWithCelebration = async (todoId: TodoId, current: boolean) => {
     const isCurrentlyDone = Boolean(current)
@@ -106,10 +113,25 @@ export default function ChecklistPage() {
 
       {/* Sunnah to-do */}
       <section>
-        <h2 className="text-xs uppercase tracking-widest mb-3" style={{ color: 'var(--c-muted-fg)' }}>
-          Amalan Sunnah
-        </h2>
-        <SunnahTodos disabled={isReadOnly} />
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="text-xs uppercase tracking-widest" style={{ color: 'var(--c-muted-fg)' }}>
+            Amalan Sunnah
+          </h2>
+          <span className="text-xs font-semibold" style={{ color: '#3888ff' }}>
+            {sunnahDoneCount} dari {SUNNAH_IDS.length} selesai
+          </span>
+        </div>
+        <div className="space-y-2">
+          {sortedSunnah.map((item) => (
+            <SunnahItemCard
+              key={item.sunnahId}
+              item={item}
+              isReadOnly={isReadOnly}
+              onToggle={toggleSunnah}
+              onPuasaTypeChange={setPuasaType}
+            />
+          ))}
+        </div>
       </section>
 
       {isReadOnly && (

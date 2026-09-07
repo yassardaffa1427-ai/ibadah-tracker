@@ -1,7 +1,6 @@
 export type TodoId =
   | 'tahajud'
   | 'subuh'
-  | 'dhuha'
   | 'zuhur'
   | 'ashar'
   | 'maghrib'
@@ -14,7 +13,6 @@ export type TodoId =
 export const TODO_IDS: TodoId[] = [
   'tahajud',
   'subuh',
-  'dhuha',
   'zuhur',
   'ashar',
   'maghrib',
@@ -28,7 +26,6 @@ export const TODO_IDS: TodoId[] = [
 export const TODO_LABELS: Record<TodoId, string> = {
   tahajud: 'Tahajud',
   subuh: 'Subuh',
-  dhuha: 'Dhuha',
   zuhur: 'Zuhur',
   ashar: 'Ashar',
   maghrib: 'Maghrib',
@@ -42,7 +39,6 @@ export const TODO_LABELS: Record<TodoId, string> = {
 export const TODO_DEFAULT_REMINDER: Record<TodoId, string> = {
   tahajud: '04:00',
   subuh: '05:00',
-  dhuha: '07:30',
   zuhur: '12:00',
   ashar: '15:30',
   maghrib: '18:00',
@@ -66,9 +62,59 @@ export interface TodoItem {
   fileBlobId?: string // only for kajian
 }
 
+export type SunnahId =
+  | 'dhuha'
+  | 'rawatib-qabliyah-subuh'
+  | 'rawatib-qabliyah-zuhur'
+  | 'rawatib-badiyah-zuhur'
+  | 'rawatib-badiyah-maghrib'
+  | 'rawatib-badiyah-isya'
+  | 'puasa-sunnah'
+
+export const SUNNAH_IDS: SunnahId[] = [
+  'dhuha',
+  'rawatib-qabliyah-subuh',
+  'rawatib-qabliyah-zuhur',
+  'rawatib-badiyah-zuhur',
+  'rawatib-badiyah-maghrib',
+  'rawatib-badiyah-isya',
+  'puasa-sunnah',
+]
+
+export const SUNNAH_LABELS: Record<SunnahId, string> = {
+  dhuha: 'Dhuha',
+  'rawatib-qabliyah-subuh': 'Qabliyah Subuh (2 rakaat)',
+  'rawatib-qabliyah-zuhur': 'Qabliyah Zuhur (2 rakaat)',
+  'rawatib-badiyah-zuhur': "Ba'diyah Zuhur (2 rakaat)",
+  'rawatib-badiyah-maghrib': "Ba'diyah Maghrib (2 rakaat)",
+  'rawatib-badiyah-isya': "Ba'diyah Isya (2 rakaat)",
+  'puasa-sunnah': 'Puasa Sunnah',
+}
+
+export const PUASA_TYPE_OPTIONS = [
+  { value: 'senin', label: 'Senin' },
+  { value: 'kamis', label: 'Kamis' },
+  { value: 'senin-kamis', label: 'Senin & Kamis' },
+  { value: 'daud', label: 'Puasa Daud' },
+  { value: 'ayyamul-bidh', label: "Ayyamul Bidh (13-15)" },
+  { value: 'asyura', label: 'Asyura (10 Muharram)' },
+  { value: 'arafah', label: 'Arafah (9 Dzulhijjah)' },
+  { value: 'syawal', label: 'Syawal' },
+  { value: 'lainnya', label: 'Lainnya' },
+]
+
+export interface SunnahItem {
+  sunnahId: SunnahId
+  dailyRecordDate: string // YYYY-MM-DD
+  isDone: boolean
+  completedAt?: number // timestamp
+  puasaType?: string // only meaningful for 'puasa-sunnah'
+}
+
 export interface DailyRecord {
   date: string // YYYY-MM-DD, primary key
-  completionRate: number // 0-100
+  completionRate: number // 0-100, wajib only
+  sunnahCompletionRate?: number // 0-100, sunnah only
   createdAt: number
 }
 

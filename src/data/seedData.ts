@@ -16,7 +16,7 @@ export async function seedDevData() {
   for (let i = COMPLETION_PATTERNS.length; i >= 1; i--) {
     const date = toDateKey(subDays(today, i))
     const doneCount = COMPLETION_PATTERNS[COMPLETION_PATTERNS.length - i] ?? 5
-    const completionRate = Math.round((doneCount / 9) * 100)
+    const completionRate = Math.round((doneCount / TODO_IDS.length) * 100)
 
     await db.dailyRecords.add({ date, completionRate, createdAt: Date.now() })
 

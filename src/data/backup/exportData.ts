@@ -11,10 +11,11 @@ function blobToBase64(blob: Blob): Promise<string> {
 }
 
 export async function exportToJSON(): Promise<void> {
-  const [dailyRecords, todoItems, profiles, streakState, reminderSettings, mediaBlobs] =
+  const [dailyRecords, todoItems, sunnahItems, profiles, streakState, reminderSettings, mediaBlobs] =
     await Promise.all([
       db.dailyRecords.toArray(),
       db.todoItems.toArray(),
+      db.sunnahItems.toArray(),
       db.profiles.toArray(),
       db.streakState.toArray(),
       db.reminderSettings.toArray(),
@@ -33,6 +34,7 @@ export async function exportToJSON(): Promise<void> {
     exportedAt: new Date().toISOString(),
     dailyRecords,
     todoItems,
+    sunnahItems,
     profiles,
     streakState,
     reminderSettings,

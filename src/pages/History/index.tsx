@@ -5,6 +5,7 @@ import { id as localeId } from 'date-fns/locale'
 import { db } from '@/data/db'
 import { useUIStore } from '@/store/uiStore'
 import { toDateKey } from '@/lib/dateUtils'
+import { TODO_IDS, SUNNAH_IDS } from '@/types/models'
 import DayRecapDetail from '@/components/history/DayRecapDetail'
 
 type FilterKey = 'all' | 'perfect' | 'partial'
@@ -14,6 +15,9 @@ interface DaySummary {
   done: number
   total: number
   rate: number
+  sunnahDone: number
+  sunnahTotal: number
+  sunnahRate: number
   attachments: number
 }
 
@@ -69,6 +73,16 @@ function DayCard({ day, onOpen }: { day: DaySummary; onOpen: () => void }) {
         <div className="h-full rounded-full" style={{ width: `${day.rate}%`, background: accent }} />
       </div>
 
+      {/* Sunnah mini stat */}
+      <div className="flex items-center justify-between mt-1.5 gap-2">
+        <div className="h-1 rounded-full overflow-hidden flex-1" style={{ background: 'rgba(56,136,255,0.15)' }}>
+          <div className="h-full rounded-full" style={{ width: `${day.sunnahRate}%`, background: '#3888ff' }} />
+        </div>
+        <span className="text-[10px] font-bold tabular-nums flex-shrink-0" style={{ color: '#3888ff' }}>
+          {day.sunnahDone}/{day.sunnahTotal}
+        </span>
+      </div>
+
       <div className="flex items-center justify-between mt-2.5">
         <span className="text-[11px] font-semibold" style={{ color: 'var(--c-muted-fg)' }}>
           {isPerfect ? 'Lengkap 🎉' : `${day.rate}% selesai`}
@@ -93,9 +107,10 @@ export default function HistoryPage() {
 
   const days = useLiveQuery(
     async (): Promise<DaySummary[]> => {
-      const [records, todoItems] = await Promise.all([
+      const [records, todoItems, sunnahItems] = await Promise.all([
         db.dailyRecords.toArray(),
         db.todoItems.toArray(),
+        db.sunnahItems.toArray(),
       ])
       const doneMap: Record<string, number> = {}
       const totalMap: Record<string, number> = {}
@@ -106,12 +121,19 @@ export default function HistoryPage() {
         if (t.photoBlobId) attachMap[t.dailyRecordDate] = (attachMap[t.dailyRecordDate] ?? 0) + 1
         if (t.fileBlobId) attachMap[t.dailyRecordDate] = (attachMap[t.dailyRecordDate] ?? 0) + 1
       }
+      const sunnahDoneMap: Record<string, number> = {}
+      for (const s of sunnahItems) {
+        if (s.isDone) sunnahDoneMap[s.dailyRecordDate] = (sunnahDoneMap[s.dailyRecordDate] ?? 0) + 1
+      }
       return records
         .map((r) => ({
           date: r.date,
           done: doneMap[r.date] ?? 0,
-          total: totalMap[r.date] ?? 11,
+          total: totalMap[r.date] ?? TODO_IDS.length,
           rate: r.completionRate,
+          sunnahDone: sunnahDoneMap[r.date] ?? 0,
+          sunnahTotal: SUNNAH_IDS.length,
+          sunnahRate: r.sunnahCompletionRate ?? 0,
           attachments: attachMap[r.date] ?? 0,
         }))
         .sort((a, b) => (a.date < b.date ? 1 : -1))

@@ -1,6 +1,6 @@
-import type { TodoItem, DailyRecord } from '@/types/models'
+import type { DailyRecord } from '@/types/models'
 
-export function calcCompletionRate(todos: TodoItem[]): number {
+export function calcCompletionRate(todos: { isDone: boolean }[]): number {
   if (todos.length === 0) return 0
   const done = todos.filter((t) => t.isDone).length
   return Math.round((done / todos.length) * 100)

@@ -4,6 +4,7 @@ import { id as localeId } from 'date-fns/locale'
 import { db } from '@/data/db'
 import { useUIStore } from '@/store/uiStore'
 import { toDateKey } from '@/lib/dateUtils'
+import { TODO_IDS } from '@/types/models'
 
 export default function RecentHistory({ limit = 7, onDayClick }: { limit?: number; onDayClick?: (date: string) => void }) {
   const { setActivePage, openHistoryDetail } = useUIStore()
@@ -30,7 +31,7 @@ export default function RecentHistory({ limit = 7, onDayClick }: { limit?: numbe
           date: r.date,
           rate: r.completionRate,
           done: doneMap[r.date] ?? 0,
-          total: totalMap[r.date] ?? 11,
+          total: totalMap[r.date] ?? TODO_IDS.length,
         }))
     },
     [limit],

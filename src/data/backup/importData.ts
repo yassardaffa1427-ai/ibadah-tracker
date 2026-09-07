@@ -34,10 +34,11 @@ export async function importFromJSON(jsonString: string): Promise<void> {
 
   await db.transaction(
     'rw',
-    [db.dailyRecords, db.todoItems, db.profiles, db.streakState, db.reminderSettings, db.mediaBlobs],
+    [db.dailyRecords, db.todoItems, db.sunnahItems, db.profiles, db.streakState, db.reminderSettings, db.mediaBlobs],
     async () => {
       await db.dailyRecords.clear()
       await db.todoItems.clear()
+      await db.sunnahItems.clear()
       await db.profiles.clear()
       await db.streakState.clear()
       await db.reminderSettings.clear()
@@ -45,6 +46,7 @@ export async function importFromJSON(jsonString: string): Promise<void> {
 
       await db.dailyRecords.bulkAdd(payload.dailyRecords as never[])
       await db.todoItems.bulkAdd(payload.todoItems as never[])
+      if ((payload.sunnahItems as unknown[])?.length) await db.sunnahItems.bulkAdd(payload.sunnahItems as never[])
       if ((payload.profiles as unknown[])?.length) await db.profiles.bulkAdd(payload.profiles as never[])
       if ((payload.streakState as unknown[])?.length) await db.streakState.bulkAdd(payload.streakState as never[])
       if ((payload.reminderSettings as unknown[])?.length) await db.reminderSettings.bulkAdd(payload.reminderSettings as never[])

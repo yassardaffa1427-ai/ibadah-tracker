@@ -7,7 +7,7 @@ import {
   getDocs,
 } from 'firebase/firestore'
 import { db } from '@/data/db'
-import type { DailyRecord, TodoItem } from '@/types/models'
+import type { DailyRecord, TodoItem, SunnahItem } from '@/types/models'
 import { toDateKey } from '@/lib/dateUtils'
 
 /**
@@ -20,12 +20,14 @@ export async function syncRecordToCloud(userId: string, dateKey?: string): Promi
   try {
     const record = await db.dailyRecords.get(targetDate)
     const todos = await db.todoItems.where('dailyRecordDate').equals(targetDate).toArray()
+    const sunnah = await db.sunnahItems.where('dailyRecordDate').equals(targetDate).toArray()
 
     if (record) {
       const recordRef = doc(firestore, 'users', userId, 'dailyRecords', targetDate)
       await setDoc(recordRef, {
         date: record.date,
         completionRate: record.completionRate,
+        sunnahCompletionRate: record.sunnahCompletionRate ?? 0,
         createdAt: record.createdAt,
         updatedAt: Date.now(),
       }, { merge: true })
@@ -42,6 +44,21 @@ export async function syncRecordToCloud(userId: string, dateKey?: string): Promi
           completedAt: item.completedAt || null,
           juzTarget: item.juzTarget || null,
           halamanTarget: item.halamanTarget || null,
+          updatedAt: Date.now(),
+        }, { merge: true })
+      }
+    }
+
+    if (sunnah.length > 0) {
+      for (const item of sunnah) {
+        const itemDocId = `${targetDate}_${item.sunnahId}`
+        const itemRef = doc(firestore, 'users', userId, 'sunnahItems', itemDocId)
+        await setDoc(itemRef, {
+          sunnahId: item.sunnahId,
+          dailyRecordDate: item.dailyRecordDate,
+          isDone: item.isDone,
+          completedAt: item.completedAt || null,
+          puasaType: item.puasaType || null,
           updatedAt: Date.now(),
         }, { merge: true })
       }
@@ -70,6 +87,7 @@ export function startCloudRealtimeListener(userId: string): () => void {
             await db.dailyRecords.put({
               date: data.date,
               completionRate: data.completionRate || 0,
+              sunnahCompletionRate: data.sunnahCompletionRate || 0,
               createdAt: data.createdAt || Date.now(),
             })
           }
@@ -78,6 +96,34 @@ export function startCloudRealtimeListener(userId: string): () => void {
     })
   }, (error) => {
     console.error('Realtime records sync error:', error)
+  })
+
+  // 2b. Snapshot Listener untuk sunnahItems
+  const sunnahColRef = collection(firestore, 'users', userId, 'sunnahItems')
+  const unsubSunnah = onSnapshot(sunnahColRef, (snapshot) => {
+    snapshot.docChanges().forEach(async (change) => {
+      if (change.type === 'added' || change.type === 'modified') {
+        const data = change.doc.data() as {
+          sunnahId: string
+          dailyRecordDate: string
+          isDone: boolean
+          completedAt?: number
+          puasaType?: string
+        }
+
+        if (data.dailyRecordDate && data.sunnahId) {
+          await db.sunnahItems.put({
+            sunnahId: data.sunnahId as SunnahItem['sunnahId'],
+            dailyRecordDate: data.dailyRecordDate,
+            isDone: Boolean(data.isDone),
+            completedAt: data.completedAt || undefined,
+            puasaType: data.puasaType || undefined,
+          })
+        }
+      }
+    })
+  }, (error) => {
+    console.error('Realtime sunnah sync error:', error)
   })
 
   // 2. Snapshot Listener untuk todoItems
@@ -118,6 +164,7 @@ export function startCloudRealtimeListener(userId: string): () => void {
         await db.dailyRecords.put({
           date: data.date,
           completionRate: data.completionRate || 0,
+          sunnahCompletionRate: data.sunnahCompletionRate || 0,
           createdAt: data.createdAt || Date.now(),
         })
       }
@@ -140,8 +187,24 @@ export function startCloudRealtimeListener(userId: string): () => void {
     })
   }).catch((e) => console.warn('Initial todos pull error:', e))
 
+  getDocs(sunnahColRef).then((snap) => {
+    snap.forEach(async (docSnap) => {
+      const data = docSnap.data() as any
+      if (data.dailyRecordDate && data.sunnahId) {
+        await db.sunnahItems.put({
+          sunnahId: data.sunnahId,
+          dailyRecordDate: data.dailyRecordDate,
+          isDone: Boolean(data.isDone),
+          completedAt: data.completedAt || undefined,
+          puasaType: data.puasaType || undefined,
+        })
+      }
+    })
+  }).catch((e) => console.warn('Initial sunnah pull error:', e))
+
   return () => {
     unsubRecords()
     unsubTodos()
+    unsubSunnah()
   }
 }
