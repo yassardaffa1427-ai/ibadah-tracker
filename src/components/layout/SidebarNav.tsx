@@ -5,6 +5,7 @@ import StreakBadge from '@/components/gamification/StreakBadge'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '@/data/db'
 import { useAuthStore } from '@/store/authStore'
+import LogoIcon from '@/components/LogoIcon'
 
 interface NavItem {
   page: Page
@@ -69,13 +70,16 @@ export default function SidebarNav() {
       aria-label="Navigasi utama"
     >
       {/* Logo */}
-      <div className="mb-8 px-2">
-        <h1 className="font-display text-xl" style={{ color: 'var(--c-gold)' }}>
-          Ibadah Tracker
-        </h1>
-        <p className="text-xs mt-0.5" style={{ color: 'var(--c-muted-fg)' }}>
-          Check Kegiatan Ibadahmu
-        </p>
+      <div className="mb-8 px-2 flex items-center gap-3">
+        <LogoIcon size={36} />
+        <div>
+          <h1 className="font-display text-lg font-bold leading-tight" style={{ color: 'var(--c-gold)' }}>
+            Ibadah Tracker
+          </h1>
+          <p className="text-[11px]" style={{ color: 'var(--c-muted-fg)' }}>
+            by yasra
+          </p>
+        </div>
       </div>
 
       {/* Nav links */}

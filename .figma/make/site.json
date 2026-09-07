@@ -1,8 +1,14 @@
 {
-  "title": "Ibadah tracker",
-  "description": "Streamline project development by providing teams with easy access to product requirement documents, ensuring alignment and clarity throughout the build process.",
+  "title": "Ibadah Tracker by Yasra",
+  "description": "Jaga kualitas ibadah seharianmu dengan ibadah tracker by yasra",
+  "icons": {
+    "icon": "/favicon.svg"
+  },
+  "openGraph": {
+    "image": "/og-image.png"
+  },
   "robots": {
-    "index": false
+    "index": true
   },
   "accessibility": {
     "addBypassLinks": false,
